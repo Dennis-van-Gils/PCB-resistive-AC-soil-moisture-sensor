@@ -1,4 +1,5 @@
 .. image:: https://knowledge.autodesk.com/sites/default/files/product-logo-sm/eagle-2017-badge-75x75.png
+    :target: https://www.autodesk.com/products/eagle/free-download
 .. image:: https://img.shields.io/badge/License-MIT-purple.svg
     :target: https://github.com/Dennis-van-Gils/PCB-resistive-AC-soil-moisture-sensor/blob/master/LICENSE.txt
 
