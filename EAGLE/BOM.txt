@@ -1,0 +1,14 @@
+Bill of materials: `Resistive AC soil moisture sensor v1.0`
+
+IC1   MCP1700-3002E/TO     CMOS low dropout voltage regulator, output 3.0V 250mA, input 2.3V-6.0V
+IC2   TLC555CP             CMOS 555 timer, input 2V-15 V
+R1    4.7 kΩ  1/4W   5%    Resistor, carbon film
+R2    100  Ω  1/4W   5%    Resistor, carbon film
+R3    150 kΩ  1/4W   5%    Resistor, carbon film
+R4    390  Ω  1/4W   5%    Resistor, carbon film
+C1    1   μF   50V  10%    Capacitor, ceramic                     KEMET C320C105K5N5TA91707301
+C2    0.1 μF   50V  10%    Capacitor, ceramic                     KEMET C320C104K5R5TA7301
+C3    1   μF   50V         Capacitor, aluminium electrolytic
+C4    0.1 μF   63V   5%    Capacitor, metallized polyester film   TDK B32529C0104J
+C5    4.7 μF   25V  10%    Capacitor, ceramic                     KEMET C320C475K3N5TA91707301
+C6    4.7 μF   25V  10%    Capacitor, ceramic                     KEMET C320C475K3N5TA91707301

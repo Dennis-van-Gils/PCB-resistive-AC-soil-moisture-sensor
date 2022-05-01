@@ -1,0 +1,6 @@
+Polyester
+  most used
+Polypropylene
+  less sentitive to humidity
+
+Source: https://en.wikipedia.org/wiki/Film_capacitor
