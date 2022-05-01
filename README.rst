@@ -17,7 +17,7 @@ The sensor works on both 3.3 V and 5.0 V supply voltage. The output is a pulse
 train with an amplitude equal to the supply voltage and of a variable frequency
 that correlates to the measured resistance. The pulses are at a 50% duty cycle.
 
-Contains EAGLE CAD, Fusion360 and LTSpice simulation files.
+Contains EAGLE, Fusion360 and LTSpice project files.
 
 - Github: https://github.com/Dennis-van-Gils/PCB-resistive-AC-soil-moisture-sensor
 
