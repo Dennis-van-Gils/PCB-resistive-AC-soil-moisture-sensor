@@ -14,7 +14,7 @@ current is used instead. The design is based on the
 `SMX sensor <https://www.emesystems.com/smx/main.html>`__ by EME Systems.
 
 The sensor can be supplied with either 3.3 V or 5.0 V and utilizes an onboard
-3 V regulator powering a TLC555 timer. The output is a pulse train with an
+3.0 V regulator powering a TLC555 timer. The output is a pulse train with an
 amplitude equal to the supply voltage and of a variable frequency that
 correlates to the measured resistance. The pulses are at a 50% duty cycle.
 
