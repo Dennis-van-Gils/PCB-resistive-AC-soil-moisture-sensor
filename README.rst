@@ -9,13 +9,14 @@ Resistive AC soil moisture sensor
 This project involves a printed circuit board design to measure the resistance
 between two metallic probes that can be placed inside soil as a measure of the
 soil humidity. It uses AC current to sense the resistance between the probes,
-preventing corrosion of the probes which otherwise would be the case when a DC
-current would be used instead. The design is based on the
+preventing corrosion of the probes which otherwise would happen when a DC
+current is used instead. The design is based on the
 `SMX sensor <https://www.emesystems.com/smx/main.html>`__ by EME Systems.
 
-The sensor works on both 3.3 V and 5.0 V supply voltage. The output is a pulse
-train with an amplitude equal to the supply voltage and of a variable frequency
-that correlates to the measured resistance. The pulses are at a 50% duty cycle.
+The sensor can be supplied with either 3.3 V or 5.0 V and utilizes an onboard
+3 V regulator powering a TLC555 timer. The output is a pulse train with an
+amplitude equal to the supply voltage and of a variable frequency that
+correlates to the measured resistance. The pulses are at a 50% duty cycle.
 
 Contains EAGLE, Fusion360 and LTSpice project files.
 
