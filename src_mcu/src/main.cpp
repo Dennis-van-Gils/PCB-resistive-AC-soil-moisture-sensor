@@ -13,22 +13,17 @@
 
 // 32u4 microcontroller has interrupts on digital pins: 0, 1, 2, 3, 7
 // SAMD microcontroller has interrupts on all digital pins, except 4
-#define PIN_SENSOR 6
-
-// Number of up-flanks to average over
-#define N_AVG 10
-
-// Timeout to forcibly stop detecting the period
-#define TIMEOUT 300 // [ms]
+#define PIN_SENSOR 7
+#define N_AVG 10    // Number of up-flanks to average over
+#define TIMEOUT 300 // [ms] Timeout to stop detecting the frequency
 
 volatile bool isr_done = false;
 volatile uint8_t isr_counter = 0;
-volatile uint32_t micros_period = 0; // Period over `N_AVG` detected up-flanks
+volatile uint16_t frequency = 0; // [Hz] Measured average frequency
 
 void isr_rising() {
-  /* Interrupt service routine activated whenever an up-flank is detected on the
-  digital input pin
-  */
+  /* Interrupt service routine for when an up-flank is detected on the input pin
+   */
   static uint32_t micros_start = 0;
 
   if (!isr_done) {
@@ -37,10 +32,18 @@ void isr_rising() {
     }
     isr_counter++;
     if (isr_counter > N_AVG) {
-      micros_period = micros() - micros_start;
+      frequency = 1000000 * N_AVG / (micros() - micros_start);
       isr_done = true;
     }
   }
+}
+
+bool measure_frequency() {
+  static uint32_t t_0 = millis();
+  isr_counter = 0;
+  isr_done = false;
+  while ((!isr_done) && ((millis() - t_0) < TIMEOUT)) {}
+  return isr_done;
 }
 
 // -----------------------------------------------------------------------------
@@ -49,7 +52,11 @@ void isr_rising() {
 
 void setup() {
   Serial.begin(9600);
-  pinMode(PIN_SENSOR, INPUT);
+
+  // Set to INPUT_PULLUP even though the sensor itself already has a pull-up
+  // resistor onboard. Doing so will prevent floating noise on the input pin
+  // leading to false frequencies when the sensor is disconnected.
+  pinMode(PIN_SENSOR, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PIN_SENSOR), isr_rising, RISING);
 }
 
@@ -64,15 +71,9 @@ void loop() {
   if (now - tick > 500) {
     tick = now;
 
-    isr_counter = 0;
-    isr_done = false;
-    while ((!isr_done) && ((millis() - tick) < TIMEOUT)) {}
-
-    if (isr_done) {
-      // Report measured average frequency in [Hz]
-      Ser.println((uint32_t)1e6 * N_AVG / micros_period);
+    if (measure_frequency()) {
+      Ser.println(frequency);
     } else {
-      // Measurement has timed out
       Ser.println("Timed out");
     }
   }
