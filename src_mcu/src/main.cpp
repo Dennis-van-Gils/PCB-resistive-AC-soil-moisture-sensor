@@ -1,21 +1,36 @@
 /*******************************************************************************
   Dennis van Gils
-  13-05-2022
+  14-05-2022
 *******************************************************************************/
 
 #include <Arduino.h>
 
 #define Ser Serial
 #define PIN_SENSOR 6
-#define PIN_SENSOR_2 5
 #define N_AVG 10
+#define TIMEOUT 300 // [ms]
 
-volatile int pwm_value = 0;
-volatile int prev_time = 0;
+volatile uint8_t isr_loop_counter = 0;
+volatile bool isr_rising_has_finished_averaging = false;
+volatile uint32_t micros_start = 0;
+volatile uint32_t micros_end = 0;
 
-void rising() {
-  Ser.println(micros() - prev_time);
-  prev_time = micros();
+void isr_rising() {
+  /* Interrupt service routine activated whenever an up-flank is detected on the
+  digital input pin.
+  This routine will be executed up to `N_AVG` times in direct succession
+  (mechanism to be coded elsewhere).
+  */
+  if (!isr_rising_has_finished_averaging) {
+    if (isr_loop_counter == 0) {
+      micros_start = micros(); // Catch start of the first up-flank
+    }
+    isr_loop_counter++;
+    if (isr_loop_counter > N_AVG) {
+      micros_end = micros(); // Catch start of the last up-flank
+      isr_rising_has_finished_averaging = true;
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -26,7 +41,8 @@ void setup() {
   Serial.begin(9600);
   pinMode(PIN_SENSOR, INPUT);
 
-  // attachInterrupt(PIN_SENSOR_2, rising, RISING);
+  // 32u4 interrupt pins: 0, 1, 2, 3, 7
+  attachInterrupt(digitalPinToInterrupt(PIN_SENSOR), isr_rising, RISING);
 }
 
 // -----------------------------------------------------------------------------
@@ -34,47 +50,21 @@ void setup() {
 // -----------------------------------------------------------------------------
 
 void loop() {
-  char char_cmd; // Incoming serial command
   uint32_t now = millis();
   static uint32_t tick = now;
-  double avg_pulse_hi;
-  double avg_pulse_lo;
 
   if (now - tick > 500) {
     tick = now;
 
-    avg_pulse_hi = 0;
-    avg_pulse_lo = 0;
-    for (uint8_t i = 0; i < N_AVG; i++) {
-      avg_pulse_hi += pulseIn(PIN_SENSOR, HIGH);
-      // avg_pulse_lo += pulseIn(PIN_SENSOR, LOW);
-    }
-    for (uint8_t i = 0; i < N_AVG; i++) {
-      // avg_pulse_hi += pulseIn(PIN_SENSOR, HIGH);
-      avg_pulse_lo += pulseIn(PIN_SENSOR, LOW);
-    }
-    avg_pulse_hi /= N_AVG;
-    avg_pulse_lo /= N_AVG;
+    isr_loop_counter = 0;
+    isr_rising_has_finished_averaging = false;
+    while ((!isr_rising_has_finished_averaging) &&
+           ((millis() - tick) < TIMEOUT)) {}
 
-    Ser.print(millis() - tick);
-    Ser.print("\t");
-    Ser.print(avg_pulse_hi, 1);
-    Ser.print("\t");
-    Ser.print(avg_pulse_lo, 1);
-    Ser.print("\t");
-    Ser.print(5e5 / avg_pulse_hi, 0);
-    Ser.print("\t");
-    Ser.print(5e5 / avg_pulse_lo, 0);
-    Ser.print("\t");
-    Ser.println(1e6 / (avg_pulse_hi + avg_pulse_lo), 0);
-  }
-
-  // Check for incoming serial commands
-  if (Ser.available() > 0) {
-    char_cmd = Ser.read();
-
-    if (char_cmd == '?') {
-      Ser.println("Resistive AC soil moisture sensor demo");
+    if (isr_rising_has_finished_averaging) {
+      Ser.println((uint32_t)1e6 * N_AVG / (micros_end - micros_start));
+    } else {
+      Ser.println("Timed out");
     }
   }
 }
