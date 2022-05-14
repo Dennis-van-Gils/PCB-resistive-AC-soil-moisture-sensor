@@ -6,14 +6,14 @@
 #include <Arduino.h>
 
 #define Ser Serial
+
 #define PIN_SENSOR 6
 #define N_AVG 10
 #define TIMEOUT 300 // [ms]
 
-volatile uint8_t isr_loop_counter = 0;
-volatile bool isr_rising_has_finished_averaging = false;
-volatile uint32_t micros_start = 0;
-volatile uint32_t micros_end = 0;
+volatile bool isr_done = false;
+volatile uint8_t isr_counter = 0;
+volatile uint32_t micros_period = 0;
 
 void isr_rising() {
   /* Interrupt service routine activated whenever an up-flank is detected on the
@@ -21,14 +21,16 @@ void isr_rising() {
   This routine will be executed up to `N_AVG` times in direct succession
   (mechanism to be coded elsewhere).
   */
-  if (!isr_rising_has_finished_averaging) {
-    if (isr_loop_counter == 0) {
-      micros_start = micros(); // Catch start of the first up-flank
+  static uint32_t micros_start = 0;
+
+  if (!isr_done) {
+    if (isr_counter == 0) {
+      micros_start = micros();
     }
-    isr_loop_counter++;
-    if (isr_loop_counter > N_AVG) {
-      micros_end = micros(); // Catch start of the last up-flank
-      isr_rising_has_finished_averaging = true;
+    isr_counter++;
+    if (isr_counter > N_AVG) {
+      micros_period = micros() - micros_start;
+      isr_done = true;
     }
   }
 }
@@ -56,13 +58,12 @@ void loop() {
   if (now - tick > 500) {
     tick = now;
 
-    isr_loop_counter = 0;
-    isr_rising_has_finished_averaging = false;
-    while ((!isr_rising_has_finished_averaging) &&
-           ((millis() - tick) < TIMEOUT)) {}
+    isr_counter = 0;
+    isr_done = false;
+    while ((!isr_done) && ((millis() - tick) < TIMEOUT)) {}
 
-    if (isr_rising_has_finished_averaging) {
-      Ser.println((uint32_t)1e6 * N_AVG / (micros_end - micros_start));
+    if (isr_done) {
+      Ser.println((uint32_t)1e6 * N_AVG / micros_period);
     } else {
       Ser.println("Timed out");
     }
