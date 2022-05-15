@@ -39,7 +39,7 @@ void isr_rising() {
 }
 
 bool measure_frequency() {
-  static uint32_t t_0 = millis();
+  uint32_t t_0 = millis();
   isr_counter = 0;
   isr_done = false;
   while ((!isr_done) && ((millis() - t_0) < TIMEOUT)) {}
