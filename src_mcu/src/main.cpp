@@ -28,10 +28,10 @@ volatile uint32_t T_upflanks = 0; // [us] Measured duration for N_AVG up-flanks
 
 uint16_t frequency = 0; // [Hz] Measured average frequency
 double resistance = 0;  // [Ohm] Frequency to resistance best-fit transformation
-const double k = -0.55295297;
-const double x0 = 1.6795268;
-const double b = 0.40662999;
-const double a = 3.98202594;
+const double k = -0.61404261;
+const double x0 = 1.65479988;
+const double b = 0.40044114;
+const double a = 3.97842502;
 
 void isr_rising() {
   /* Interrupt service routine for when an up-flank is detected on the input pin
@@ -64,6 +64,9 @@ bool measure_frequency() {
     double p = (log10(frequency) - x0) * b;
     double R_log = (k * log(p / (1 - p)) + a);
     resistance = pow(10, R_log);
+    if (resistance > 10e6) {
+      resistance = INFINITY;
+    }
   } else {
     resistance = NAN;
   }
