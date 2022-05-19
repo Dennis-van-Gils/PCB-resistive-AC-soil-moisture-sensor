@@ -4,7 +4,7 @@
   measurement.
 
   Dennis van Gils
-  18-05-2022
+  19-05-2022
 *******************************************************************************/
 
 #include <Arduino.h>
@@ -14,19 +14,24 @@
 
 // 32u4 microcontroller has interrupts on digital pins: 0, 1, 2, 3, 7
 // SAMD microcontroller has interrupts on all digital pins, except 4
-#define PIN_SENSOR 5
+#ifdef _VARIANT_FEATHER_M4_
+#  define PIN_SENSOR 5
+#else
+#  define PIN_SENSOR 7
+#endif
 #define N_AVG 10    // Number of up-flanks to average over
 #define TIMEOUT 300 // [ms] Timeout to stop detecting the frequency
 
 volatile bool isr_done = false;
 volatile uint8_t isr_counter = 0;
-volatile uint16_t frequency = 0; // [Hz] Measured average frequency
+volatile uint32_t T_upflanks = 0; // [us] Measured duration for N_AVG up-flanks
 
-float resistance = 0; // [Ohm] Frequency to resistance best-fit transformation
-const float k = -0.55295297;
-const float x0 = 1.6795268;
-const float b = 0.40662999;
-const float a = 3.98202594;
+uint16_t frequency = 0; // [Hz] Measured average frequency
+double resistance = 0;  // [Ohm] Frequency to resistance best-fit transformation
+const double k = -0.55295297;
+const double x0 = 1.6795268;
+const double b = 0.40662999;
+const double a = 3.98202594;
 
 void isr_rising() {
   /* Interrupt service routine for when an up-flank is detected on the input pin
@@ -39,7 +44,7 @@ void isr_rising() {
     }
     isr_counter++;
     if (isr_counter > N_AVG) {
-      frequency = 1000000 * N_AVG / (micros() - micros_start);
+      T_upflanks = micros() - micros_start;
       isr_done = true;
     }
   }
@@ -55,10 +60,10 @@ bool measure_frequency() {
     // Frequency to resistance best-fit transformation (is monotonic, yeay :))
     // Resistance fit +/-20 % (at worst) wrt as measured during calibration,
     // good enough for order-of-10s estimation
-    float p = (log10(frequency) - x0) * b;
-    float R_log = (k * log(p / (1 - p)) + a);
+    frequency = 1000000 * N_AVG / T_upflanks;
+    double p = (log10(frequency) - x0) * b;
+    double R_log = (k * log(p / (1 - p)) + a);
     resistance = pow(10, R_log);
-
   } else {
     resistance = NAN;
   }
@@ -71,13 +76,17 @@ bool measure_frequency() {
 // -----------------------------------------------------------------------------
 
 void setup() {
-  Serial.begin(9600);
+  Ser.begin(9600);
 
   // Set to INPUT_PULLUP even though the sensor itself already has a pull-up
   // resistor onboard. Doing so will prevent floating noise on the input pin
   // leading to false frequencies when the sensor is disconnected.
   pinMode(PIN_SENSOR, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PIN_SENSOR), isr_rising, RISING);
+
+  // Light up onboard LED pin 13
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 // -----------------------------------------------------------------------------
