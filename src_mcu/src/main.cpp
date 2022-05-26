@@ -10,6 +10,8 @@
 #include <Arduino.h>
 #include <math.h>
 
+#include "DvG_measure_frequency.h"
+
 #define Ser Serial
 
 // 32u4 microcontroller has interrupts on digital pins: 0, 1, 2, 3, 7
@@ -100,8 +102,20 @@ void loop() {
   uint32_t now = millis();
   static uint32_t tick = now;
 
+  uint32_t pulse_1;
+  uint32_t pulse_3;
+  uint32_t pulse_4;
+
   if (now - tick > 500) {
     tick = now;
+
+    noInterrupts();
+    pulse_1 = dvg_pulseIn(PIN_SENSOR, HIGH, 30000);
+    pulse_3 = pulseIn(PIN_SENSOR, HIGH, 3000);
+    // pulse_4 = pulseIn(PIN_SENSOR, LOW, 3000);
+    interrupts();
+    Ser.println(pulse_1);
+    // Ser.println((pulse_3 + pulse_4)*10);
 
     if (measure_frequency()) {
       Ser.print(T_upflanks);
