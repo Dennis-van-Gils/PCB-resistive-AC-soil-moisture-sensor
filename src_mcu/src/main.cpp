@@ -26,8 +26,8 @@ volatile bool isr_done = false;
 volatile uint8_t isr_counter = 0;
 volatile uint32_t T_upflanks = 0; // [us] Measured duration for N_AVG up-flanks
 
-uint16_t frequency = 0; // [Hz] Measured average frequency
-double resistance = 0;  // [Ohm] Frequency to resistance best-fit transformation
+double frequency = 0;  // [Hz] Measured average frequency
+double resistance = 0; // [Ohm] Frequency to resistance best-fit transformation
 const double k = -0.61404261;
 const double x0 = 1.65479988;
 const double b = 0.40044114;
@@ -60,7 +60,7 @@ bool measure_frequency() {
     // Frequency to resistance best-fit transformation (is monotonic, yeay :))
     // Resistance fit +/-20 % (at worst) wrt as measured during calibration,
     // good enough for order-of-10s estimation
-    frequency = 1000000 * N_AVG / T_upflanks;
+    frequency = 1000000. * N_AVG / T_upflanks;
     double p = (log10(frequency) - x0) * b;
     double R_log = (k * log(p / (1 - p)) + a);
     resistance = pow(10, R_log);
@@ -104,6 +104,8 @@ void loop() {
     tick = now;
 
     if (measure_frequency()) {
+      Ser.print(T_upflanks);
+      Ser.print("\t");
       Ser.print(frequency);
       Ser.print("\t");
       Ser.println(resistance);
