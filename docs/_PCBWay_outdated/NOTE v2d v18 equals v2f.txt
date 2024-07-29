@@ -1,0 +1,3 @@
+Notes:
+* Even though the board in this folder is called v2, it is not. It is an alpha version. Alpha 2.0 that is. The version in the folder one up is labelled 1, as in release 1.0.
+* v2d v18 equals v2f
